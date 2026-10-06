@@ -134,7 +134,7 @@ test("the README has the sections every toolkit tool has, and the install lines 
   assert.ok(readme.includes("/chat-ferry:import") && readme.includes("/chat-ferry:export"));
   assert.ok(readme.includes("Node 22.13"), "says which Node reads Cursor's store");
   const tests = sources.filter((f) => /\.test\.mjs$/.test(f)).length;
-  assert.ok(tests >= 8, "test files");
+  assert.ok(tests >= 12, "test files");
 });
 
 test("the CI workflow runs the suite on three systems and four Node versions", () => {

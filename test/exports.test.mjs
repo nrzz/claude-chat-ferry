@@ -62,14 +62,22 @@ const node = (id, parent, children, message = null) => ({ id, parent, children, 
 
 const CHATGPT = [
   {
-    // current_node names the end of the branch the person last saw; u1 was answered twice (a1 was regenerated into a1b)
+    // current_node names the end of the branch the person last saw. u1 was answered twice: a1 was regenerated into a1b.
+    // The first answer went on for several more messages, so the dropped branch is the longer one: only current_node
+    // says which of the two the person kept.
     id: "a1111111-0000-4000-8000-000000000001", title: "Sorting algorithms", create_time: 1789000000.25, update_time: 1789000900.5, current_node: "a3", default_model_slug: "gpt-4o",
     mapping: {
       root: node("root", null, ["sys"]),
       sys: node("sys", "root", ["ctx"], msg("sys", "system", [""], { time: 1789000000 })),
       ctx: node("ctx", "sys", ["u1"], msg("ctx", "user", ["hidden context the person never saw"], { metadata: { is_visually_hidden_from_conversation: true } })),
       u1: node("u1", "ctx", ["a1", "a1b"], msg("u1", "user", ["Explain quicksort"], { time: 1789000010 })),
-      a1: node("a1", "u1", [], msg("a1", "assistant", ["First answer, regenerated and not kept"], { time: 1789000020 })),
+      a1: node("a1", "u1", ["d1"], msg("a1", "assistant", ["First answer, regenerated and not kept"], { time: 1789000020 })),
+      d1: node("d1", "a1", ["d2"], msg("d1", "user", ["A follow-up in the dropped branch"], { time: 1789000021 })),
+      d2: node("d2", "d1", ["d3"], msg("d2", "assistant", ["A reply in the dropped branch"], { time: 1789000022 })),
+      d3: node("d3", "d2", ["d4"], msg("d3", "user", ["Another follow-up in the dropped branch"], { time: 1789000023 })),
+      d4: node("d4", "d3", ["d5"], msg("d4", "assistant", ["Another reply in the dropped branch"], { time: 1789000024 })),
+      d5: node("d5", "d4", ["d6"], msg("d5", "user", ["Yet another follow-up in the dropped branch"], { time: 1789000025 })),
+      d6: node("d6", "d5", [], msg("d6", "assistant", ["The end of the dropped branch"], { time: 1789000026 })),
       a1b: node("a1b", "u1", ["u2"], msg("a1b", "assistant", ["Second answer, the one kept"], { time: 1789000030 })),
       u2: node("u2", "a1b", ["t1"], msg("u2", "user", ["Show code"], { time: 1789000040 })),
       t1: node("t1", "u2", ["a2"], msg("t1", "tool", ["[1, 2, 3]"], { name: "python", time: 1789000050 })),
@@ -182,7 +190,7 @@ test("listJsonFile lists a ChatGPT export newest first, counting the messages pe
   assert.equal(items[1].updatedAt, iso(1789000900.5));
   // user and assistant messages anywhere in the tree: the system, tool and root nodes are not counted
   assert.equal(items[0].messages, 5);
-  assert.equal(items[1].messages, 7);
+  assert.equal(items[1].messages, 13);
 });
 
 test("listJsonFile lists a file of this tool's own JSON, one conversation or many", () => {
@@ -342,6 +350,7 @@ test("a ChatGPT conversation follows the branch current_node ends, not the regen
   assert.equal(conv.turns[1].text, "Second answer, the one kept");
   assert.equal(conv.turns[2].text, "Show code");
   assert.ok(!JSON.stringify(conv).includes("regenerated"), "the answer that was regenerated is not part of the chat");
+  assert.ok(!JSON.stringify(conv).includes("dropped"), "nor is anything said in the branch that was dropped, though it is the longer one");
 });
 
 test("a ChatGPT conversation skips system messages and messages hidden from the person", () => {
