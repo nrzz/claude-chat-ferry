@@ -1,8 +1,8 @@
 ---
 name: import
-description: Continue this project's latest Cursor or Antigravity chat here: its last exchanges are brought into this conversation.
+description: Continue the latest Cursor or Antigravity chat here.
 disable-model-invocation: true
-argument-hint: "[cursor|antigravity] [number of exchanges, default 10]"
+argument-hint: "[cursor|antigravity] [exchanges]"
 allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/claude-chat-ferry.mjs" *) Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/claude-chat-ferry.mjs *)
 ---
 

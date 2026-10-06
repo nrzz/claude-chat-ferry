@@ -1,6 +1,6 @@
 ---
 name: export
-description: Hand this session to Cursor or Antigravity: writes the conversation as a Markdown file in the project, secrets redacted.
+description: Hand this session to Cursor or Antigravity as a Markdown file.
 disable-model-invocation: true
 allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/claude-chat-ferry.mjs" *) Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/claude-chat-ferry.mjs *)
 ---

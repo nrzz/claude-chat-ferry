@@ -19,11 +19,11 @@ Inside Claude Code the plugin adds `/chat-ferry:import` (bring the latest Cursor
 | Where | Tokens |
 | --- | --- |
 | The `claude-chat-ferry` command | 0: it runs outside Claude |
-| `/chat-ferry:export` | about 150 per use: the skill's text, the command it runs, the file name it prints, and a two-line reply |
-| `/chat-ferry:import` | the chat it brings in, plus about 100: by default the last 10 exchanges of the other tool's chat enter this conversation as a tool result. `claude-chat-ferry show cursor:latest` says how big the whole chat is before you ask for more |
+| `/chat-ferry:export` | about 150 per use: the skill's text (about 70 by Claude Code's estimate), the command it runs, the file name it prints, and a two-line reply |
+| `/chat-ferry:import` | the chat it brings in, plus about 100 (the skill's text is about 90 by Claude Code's estimate): by default the last 10 exchanges of the other tool's chat enter this conversation as a tool result. `claude-chat-ferry show cursor:latest` says how big the whole chat is before you ask for more |
 | A session written by `import` | nothing until you resume it. Then its turns are the session's history, sent with every prompt like any session's; the import prints the size, and `--last 20` keeps only the newest 20 exchanges |
 
-Both skills are user-only (`disable-model-invocation: true`): Claude never sees them until you type them, so an installed plugin adds nothing to a session that does not use it.
+Both skills are user-only (`disable-model-invocation: true`): Claude never sees them until you type them, so an installed plugin adds nothing to a session that does not use it. `claude plugin details` still estimates about 38 always-on tokens for the plugin, because it counts the two skills' descriptions; Claude Code leaves user-only skills out of the list it gives the model.
 
 ## Install
 
