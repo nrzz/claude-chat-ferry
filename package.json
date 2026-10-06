@@ -1,0 +1,42 @@
+{
+  "name": "claude-chat-ferry",
+  "version": "1.0.0",
+  "description": "Move a chat between Claude Code, Cursor and Antigravity: continue a Cursor or Antigravity chat in Claude Code, hand a Claude Code session to Cursor or Antigravity, or turn any of them (and claude.ai or ChatGPT exports) into Markdown or JSON.",
+  "type": "module",
+  "bin": {
+    "claude-chat-ferry": "bin/claude-chat-ferry.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    ".claude-plugin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": "github:nrzz/claude-chat-ferry",
+  "homepage": "https://github.com/nrzz/claude-chat-ferry#readme",
+  "bugs": "https://github.com/nrzz/claude-chat-ferry/issues",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "cursor",
+    "antigravity",
+    "chat",
+    "conversation",
+    "export",
+    "import",
+    "transcript",
+    "markdown",
+    "migration"
+  ],
+  "author": "Naresh Prabu",
+  "license": "MIT"
+}

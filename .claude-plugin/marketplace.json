@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-chat-ferry",
+  "description": "Move a chat between Claude Code, Cursor and Antigravity: continue a Cursor or Antigravity chat in Claude Code, hand a Claude Code session to them, or turn any of them (and claude.ai or ChatGPT exports) into Markdown or JSON.",
+  "owner": {
+    "name": "Naresh Prabu"
+  },
+  "plugins": [
+    {
+      "name": "chat-ferry",
+      "description": "Continue this project's latest Cursor or Antigravity chat in Claude Code (/chat-ferry:import), or hand this session to them as a Markdown file with secrets redacted (/chat-ferry:export). The claude-chat-ferry command does the same from a terminal, at no token cost.",
+      "author": { "name": "Naresh Prabu" },
+      "category": "productivity",
+      "source": "./",
+      "homepage": "https://github.com/nrzz/claude-chat-ferry"
+    }
+  ]
+}

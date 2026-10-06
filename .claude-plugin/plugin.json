@@ -1,0 +1,15 @@
+{
+  "name": "chat-ferry",
+  "displayName": "Chat Ferry",
+  "version": "1.0.0",
+  "description": "Move a chat between Claude Code, Cursor and Antigravity: /chat-ferry:import continues this project's latest Cursor or Antigravity chat here, and /chat-ferry:export hands this session to them as a Markdown file with secrets redacted. The claude-chat-ferry command does the same from a terminal, for claude.ai and ChatGPT exports too, at no token cost.",
+  "author": { "name": "Naresh Prabu" },
+  "homepage": "https://github.com/nrzz/claude-chat-ferry",
+  "repository": "https://github.com/nrzz/claude-chat-ferry",
+  "documentationUrl": "https://github.com/nrzz/claude-chat-ferry#readme",
+  "supportUrl": "https://github.com/nrzz/claude-chat-ferry/issues",
+  "privacyPolicyUrl": "https://github.com/nrzz/claude-chat-ferry#privacy-and-redaction",
+  "termsOfServiceUrl": "https://github.com/nrzz/claude-chat-ferry/blob/main/LICENSE",
+  "license": "MIT",
+  "keywords": ["cursor", "antigravity", "chat", "conversation", "import", "export", "transcript", "markdown", "migration", "productivity"]
+}
