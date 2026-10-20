@@ -2,7 +2,7 @@
 
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![node >= 18](https://img.shields.io/badge/node-%3E%3D18-339933.svg) ![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg) [![part of the Claude Code toolkit](https://img.shields.io/badge/Claude%20Code-toolkit-d97757.svg)](https://github.com/nrzz/claude-code-toolkit)
 
-Move a chat between Claude Code, Cursor and Antigravity. Continue this project's latest Cursor or Antigravity chat in Claude Code, hand a Claude Code session to Cursor or Antigravity, or turn any of them into Markdown or JSON. It also reads Codex CLI sessions, claude.ai and ChatGPT data exports, plain Markdown chats and lists of messages.
+Move a chat between Claude Code, Cursor and Antigravity. Continue this project's latest Cursor or Antigravity chat in Claude Code, hand a Claude Code session to Cursor or Antigravity, or turn any of them into Markdown or JSON. It also reads Codex CLI and Gemini CLI sessions, claude.ai and ChatGPT data exports, plain Markdown chats and lists of messages.
 
 | You want to | Run | What you get |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ Next, in D:\Projects\webapp:
   claude --resume 56b6c5e1-4a3a-41a4-861e-8aa01d797a95
 ```
 
-`cursor:latest` is this project's newest Cursor chat that has messages (Cursor keeps an empty chat for every "New chat"; those are skipped). `cursor:3f2a` takes the chat whose id starts with that, from any project; `antigravity:latest` and `antigravity:<id>` do the same for Antigravity, `codex:latest` for Codex CLI. `claude --resume <id>` then opens the session with the whole chat as its history. Run it in the project folder; Claude Code 2.1.289 also finds the id from any folder when only one project holds it.
+`cursor:latest` is this project's newest Cursor chat that has messages (Cursor keeps an empty chat for every "New chat"; those are skipped). `cursor:3f2a` takes the chat whose id starts with that, from any project; `antigravity:latest` and `antigravity:<id>` do the same for Antigravity, `codex:latest` for Codex CLI, `gemini:latest` for Gemini CLI. `claude --resume <id>` then opens the session with the whole chat as its history. Run it in the project folder; Claude Code 2.1.289 also finds the id from any folder when only one project holds it.
 
 What the session holds, and the options that change it:
 
@@ -113,11 +113,12 @@ claude-chat-ferry export cursor:latest --to json
 
 The Markdown file has a front matter block (title, tool, id, project, model, start and end time) and one `## User` or `## Assistant` heading per turn, with tool calls as `> **Tool** name: what it did` lines. The JSON is this tool's own shape (`format: "claude-chat-ferry/1"`): `{ tool, id, title, project, model, startedAt, endedAt, turns: [{ role, at, text, thinking, tools: [{ name, input, output }] }] }`. Both read back in: `import notes/retry-loop.md` makes a Claude Code session from the file.
 
-### Other sources: Codex CLI, claude.ai, ChatGPT, Markdown, lists of messages
+### Other sources: Codex CLI, Gemini CLI, claude.ai, ChatGPT, Markdown, lists of messages
 
 | Source | Spelling | Notes |
 | --- | --- | --- |
 | Codex CLI | `codex:latest`, `codex:<id>` | its sessions under `~/.codex/sessions` (`CODEX_HOME` moves them); this project's by default |
+| Gemini CLI | `gemini:latest`, `gemini:<id>` | its sessions under `~/.gemini/tmp/<hash>/chats/` (`GEMINI_HOME` moves them), or `/chat share` exports; this project's by default |
 | claude.ai data export | `conversations.json` | Settings, Privacy, Export data. `list conversations.json` numbers the conversations; `--pick 12`, `--pick <id start>` or `--pick "login bug"` chooses one |
 | ChatGPT data export | `conversations.json` | Settings, Data controls, Export data. The same `--pick`; the branch you last saw is the one taken |
 | A Markdown chat | `chat.md` | this tool's own files, and hand-written ones with `## User` / `## Assistant`, `**User:**`, `User:` or `### Human` markers; a file without markers is one prompt |
@@ -141,6 +142,7 @@ Both run only the plugin's own command (`node .../bin/claude-chat-ferry.mjs ...`
 | Cursor | `state.vscdb` under `%APPDATA%\Cursor\User` (Windows), `~/Library/Application Support/Cursor/User` (macOS), `~/.config/Cursor/User` (Linux): the `composerHeaders` table, `composerData:` and `bubbleId:` rows, the older `composer.composerHeaders` and per-workspace indexes, and the pre-composer `aichat.chatdata` tabs. `CURSOR_USER_DIR` overrides the folder | Cursor 3.19.19 |
 | Antigravity | `~/.gemini/antigravity/brain/<id>/.system_generated/logs/transcript.jsonl` (`transcript_full.jsonl` when present), titles from `agyhub_summaries_proto.pb`; the `antigravity-ide` and `antigravity-cli` folders too. `ANTIGRAVITY_DIR` overrides them | Antigravity (June 2026 build) |
 | Codex CLI | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` (`CODEX_HOME`) | the format others have documented; no install was at hand |
+| Gemini CLI | `~/.gemini/tmp/<hash>/chats/session-*.json` and `.jsonl` (`GEMINI_HOME`) | Gemini CLI session logs and `/chat share` exports |
 
 These are the tools' own files and formats, none of them documented by their makers; a tool's update can change them. The reader of each is in one file (see Files), tested against synthetic copies of the layouts, and checked by hand against the versions above. If your version keeps chats somewhere else, `list --json` and an issue with the field names you see are the quickest way to a fix.
 
@@ -168,8 +170,8 @@ Every reader turns a tool's own records into one shape, a conversation of turns 
 - **The skills reach the command.** `claude -p --plugin-dir . "/chat-ferry:import antigravity 2"` through the same fake API showed Claude Code filling in `$ARGUMENTS`, `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PROJECT_DIR}` and asking the model to run the pre-approved command; the same for `/chat-ferry:export`.
 - **Cursor 3.19.19 on Windows, 2026-10-06:** `list --all` listed 134 chats from a 2.3 GB store in about a quarter of a second; the newest chat read as 7 exchanges with alternating roles, a chat of 136 turns and 2,220 tool calls read, exported to Markdown and read back with the same turns and tools, and became a session file that read back with the same turns. The pre-composer `aichat.chatdata` layout and the per-workspace index are covered by the tests only; this install had neither.
 - **Antigravity, 2026-10-06:** both conversations on the machine listed with their titles from `agyhub_summaries_proto.pb`, and read as one prompt and one answer each, with the `<USER_REQUEST>` wrapper removed and the reasoning kept. The tool steps (`RUN_COMMAND`, `VIEW_FILE`) are covered by the tests from the transcripts others have published.
-- **Codex CLI, claude.ai and ChatGPT** readers run against synthetic files in the documented shapes; no live install or export was at hand. The ChatGPT reader follows `current_node` up to the root, so a regenerated answer gives the branch you last saw.
-- **405 automated tests** (`npm test`), all in throwaway folders: synthetic Claude Code sessions, Cursor stores built with `node:sqlite` in every layout above, Antigravity folders with a hand-encoded titles file, Codex rollouts, claude.ai and ChatGPT exports, Markdown in the hand-written shapes, the redaction rules, and the command's every option and error. CI runs them on Windows, macOS and Linux with Node 20, 22 and 24, and on Linux with Node 18, where the Cursor tests are skipped and the command explains which Node it needs.
+- **Codex CLI, Gemini CLI, claude.ai and ChatGPT** readers run against synthetic files in the documented shapes; no live install or export was at hand. The ChatGPT reader follows `current_node` up to the root, so a regenerated answer gives the branch you last saw.
+- **425 automated tests** (`npm test`), all in throwaway folders: synthetic Claude Code sessions, Cursor stores built with `node:sqlite` in every layout above, Antigravity folders with a hand-encoded titles file, Codex rollouts, Gemini CLI session files, claude.ai and ChatGPT exports, Markdown in the hand-written shapes, the redaction rules, and the command's every option and error. CI runs them on Windows, macOS and Linux with Node 20, 22 and 24, and on Linux with Node 18, where the Cursor tests are skipped and the command explains which Node it needs.
 - **Not verified:** macOS and Linux paths of Cursor and Antigravity beyond their documented locations; Antigravity's project folder (not recorded); a Codex CLI install; `/resume` picker titles (the title records are the ones Claude Code 2.1.x writes).
 
 ## Files
@@ -182,12 +184,13 @@ Every reader turns a tool's own records into one shape, a conversation of turns 
 | `src/cursor.mjs`, `src/sqlite.mjs` | Cursor's store, read-only through `node:sqlite` |
 | `src/antigravity.mjs` | Antigravity's transcripts and titles |
 | `src/codex.mjs` | Codex CLI's rollout files |
+| `src/gemini.mjs` | Gemini CLI session files |
 | `src/exports.mjs` | claude.ai and ChatGPT exports, lists of messages, this tool's JSON |
 | `src/markdown.mjs` | Markdown out and in |
 | `src/redact.mjs`, `src/util.mjs` | secrets and paths; text, dates, files |
 | `skills/` | `/chat-ferry:import` and `/chat-ferry:export` |
 | `.claude-plugin/` | the plugin and its one-plugin marketplace |
-| `test/` | the tests, with the fixture builders (`fake-cursor.mjs`, `fake-antigravity.mjs`, `fake-codex.mjs`, `synthetic.mjs`) |
+| `test/` | the tests, with the fixture builders (`fake-cursor.mjs`, `fake-antigravity.mjs`, `fake-codex.mjs`, `fake-gemini.mjs`, `synthetic.mjs`) |
 
 ## Contributing
 

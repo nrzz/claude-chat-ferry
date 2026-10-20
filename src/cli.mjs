@@ -4,6 +4,7 @@ import path from "node:path";
 import { findConversation as findAntigravity, listConversations as listAntigravity, readConversation as readAntigravity } from "./antigravity.mjs";
 import { findSession, homeDir, listSessions, readSession, writeSession } from "./claude-code.mjs";
 import { findSession as findCodex, listSessions as listCodex, readSession as readCodex } from "./codex.mjs";
+import { findSession as findGemini, listSessions as listGemini, readSession as readGemini } from "./gemini.mjs";
 import { findChat, listChats, readChat } from "./cursor.mjs";
 import { detectJson, listJsonFile, loadJsonFile, readJsonFile, toJson } from "./exports.mjs";
 import { fromMarkdown, toMarkdown } from "./markdown.mjs";
@@ -15,7 +16,7 @@ import { REPO_URL, VERSION } from "./version.mjs";
 const HELP = `claude-chat-ferry ${VERSION}: move a chat between Claude Code, Cursor and Antigravity.
 
 Usage
-  claude-chat-ferry list [--from claude|cursor|antigravity|codex|all] [--all] [--limit n] [--json]
+  claude-chat-ferry list [--from claude|cursor|antigravity|codex|gemini|all] [--all] [--limit n] [--json]
   claude-chat-ferry list <export.json>             the conversations in a claude.ai or ChatGPT export
   claude-chat-ferry show <source>                  how big a chat is, before you move it
   claude-chat-ferry import <source> [options]      continue it in Claude Code: writes a session,
@@ -28,6 +29,7 @@ Sources
   antigravity:latest  antigravity:<id> an Antigravity conversation
   claude:latest  claude:<id>          a Claude Code session
   codex:latest  codex:<id>            a Codex CLI session
+  gemini:latest  gemini:<id>          a Gemini CLI session
   <file>.md | <file>.json | <file>.jsonl   a Markdown chat, a claude.ai or ChatGPT export
                                       (--pick chooses one of many), a list of messages, this
                                       tool's JSON, or a Claude Code session file
@@ -82,8 +84,8 @@ export function parseArgs(argv) {
 // Sources
 // ---------------------------------------------------------------------------------------------
 
-const SOURCE = /^(claude|claude-code|cc|cursor|antigravity|ag|codex):(.+)$/i;
-const toolOfPrefix = (p) => (/^(claude|claude-code|cc)$/i.test(p) ? "claude-code" : /^cursor$/i.test(p) ? "cursor" : /^codex$/i.test(p) ? "codex" : "antigravity");
+const SOURCE = /^(claude|claude-code|cc|cursor|antigravity|ag|codex|gemini):(.+)$/i;
+const toolOfPrefix = (p) => (/^(claude|claude-code|cc)$/i.test(p) ? "claude-code" : /^cursor$/i.test(p) ? "cursor" : /^codex$/i.test(p) ? "codex" : /^gemini$/i.test(p) ? "gemini" : "antigravity");
 
 export async function resolveSource(spec, o, ctx) {
   const m = SOURCE.exec(spec);
@@ -108,6 +110,12 @@ export async function resolveSource(spec, o, ctx) {
       try { s = findCodex(ref, { env: ctx.env, project: o.project, all: o.all }); } catch (e) { fail(e.message); }
       if (!s) fail(ref === "latest" ? `no Codex CLI session for ${where} (try --all)` : `no Codex CLI session starts with "${ref}"`);
       return readCodex(s);
+    }
+    if (tool === "gemini") {
+      let s;
+      try { s = findGemini(ref, { env: ctx.env, project: o.project, all: o.all }); } catch (e) { fail(e.message); }
+      if (!s) fail(ref === "latest" ? `no Gemini CLI session for ${where} (try --all)` : `no Gemini CLI session starts with "${ref}"`);
+      return readGemini(s);
     }
     let c;
     try { c = findAntigravity(ref, { env: ctx.env }); } catch (e) { fail(e.message); }
@@ -162,7 +170,7 @@ async function cmdList(o, ctx) {
     return 0;
   }
   const from = (o.from || "all").toLowerCase();
-  if (!["all", "claude", "claude-code", "cursor", "antigravity", "codex"].includes(from)) fail("--from is claude, cursor, antigravity, codex or all");
+  if (!["all", "claude", "claude-code", "cursor", "antigravity", "codex", "gemini"].includes(from)) fail("--from is claude, cursor, antigravity, codex, gemini or all");
   const limit = o.limit ? Number(o.limit) : 15;
   if (!(limit > 0)) fail("--limit needs a number");
   const where = o.all ? "every project" : o.project;
@@ -173,6 +181,7 @@ async function cmdList(o, ctx) {
   }
   if (from === "all" || from === "antigravity") groups.push({ tool: "antigravity", items: listAntigravity({ env: ctx.env, limit }) });
   if (from === "all" || from === "codex") { const items = listCodex({ env: ctx.env, project: o.project, all: o.all, limit }); if (from === "codex" || items.length) groups.push({ tool: "codex", items }); }
+  if (from === "all" || from === "gemini") { const items = listGemini({ env: ctx.env, project: o.project, all: o.all, limit }); if (from === "gemini" || items.length) groups.push({ tool: "gemini", items }); }
   if (from === "all" || from.startsWith("claude")) groups.push({ tool: "claude-code", items: listSessions({ env: ctx.env, project: o.project, all: o.all, limit }) });
   if (o.json) { say(JSON.stringify({ project: where, groups, problems }, null, 2)); return 0; }
   for (const g of groups) {

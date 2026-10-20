@@ -7,6 +7,7 @@ import { Transcript, richSession } from "./synthetic.mjs";
 import { makeCursorStore, sampleChats } from "./fake-cursor.mjs";
 import { makeAntigravity, sampleConversations } from "./fake-antigravity.mjs";
 import { makeCodex, sampleCodex } from "./fake-codex.mjs";
+import { makeGemini, sampleGemini } from "./fake-gemini.mjs";
 import { readSession, sessionFiles } from "../src/claude-code.mjs";
 import { parseArgs } from "../src/cli.mjs";
 import { VERSION } from "../src/version.mjs";
@@ -22,6 +23,7 @@ async function populated(name) {
   const session = richSession(w.claude, { cwd: project, extra: `token ${SECRETS.github}` });
   makeAntigravity(w.antigravity, sampleConversations());
   makeCodex(w.codex, sampleCodex(project, other));
+  makeGemini(w.gemini, sampleGemini(project, other));
   if (hasSqlite) await makeCursorStore(w.cursor, sampleChats(project, other));
   else { // a store exists, but this Node cannot read it: the command must say which Node it needs
     fs.mkdirSync(path.join(w.cursor, "globalStorage"), { recursive: true });
@@ -69,6 +71,7 @@ test("list shows each tool's chats for the project, newest first, with sizes; --
   assert.match(r.out, /Retry loop in the client/);
   assert.match(r.out, /Codex CLI\s+1 chat/);
   assert.match(r.out, /Add a health endpoint/);
+  assert.match(r.out, /Gemini CLI\s+1 chat/);
   if (hasSqlite) {
     assert.match(r.out, /Cursor\s+4 chats/, "two named chats, the archived one and the empty New chat");
     assert.match(r.out, /Fix the carousel on mobile\s+2 prompts/);
@@ -83,7 +86,10 @@ test("list shows each tool's chats for the project, newest first, with sizes; --
   const all = await run(["list", "--all", "--from", "codex"], w, { cwd: project });
   assert.match(all.out, /Codex CLI\s+2 chats, every project/);
   assert.match(all.out, /Other project question/);
-  assert.match((await run(["list", "--from", "nope"], w)).err, /--from is claude, cursor, antigravity, codex or all/);
+  const allGemini = await run(["list", "--all", "--from", "gemini"], w, { cwd: project });
+  assert.match(allGemini.out, /Gemini CLI\s+2 chats, every project/);
+  assert.match(allGemini.out, /Other project question/);
+  assert.match((await run(["list", "--from", "nope"], w)).err, /--from is claude, cursor, antigravity, codex, gemini or all/);
   assert.match((await run(["list", "--limit", "x"], w)).err, /--limit needs a number/);
 });
 
@@ -136,6 +142,7 @@ test("show says how big a chat is before you move it", async () => {
   assert.match((await run(["show", "claude:zzzz"], w)).err, /no Claude Code session starts with "zzzz"/);
   assert.match((await run(["show", "antigravity:zzzz"], w)).err, /no Antigravity conversation starts with "zzzz"/);
   assert.match((await run(["show", "codex:zzzz"], w)).err, /no Codex CLI session starts with "zzzz"/);
+  assert.match((await run(["show", "gemini:zzzz"], w)).err, /no Gemini CLI session starts with "zzzz"/);
   assert.match((await run(["show", "nope:latest"], w)).err, /is not a source I know/);
   assert.match((await run(["show", "x.txt"], w)).err, /no such file exists/);
 });
@@ -345,6 +352,18 @@ test("the Codex source works end to end: show, import", async () => {
   const id = /claude --resume ([0-9a-f-]{36})/.exec(imp.out)[1];
   const conv = readSession(sessionFiles({ env: w.env, project }).find((s) => s.id === id).file);
   assert.match(conv.turns[1].text, /\(Used exec_command: ls src\)\n```\napp\.js\nroutes\.js\n```/);
+});
+
+test("the Gemini source works end to end: show, import", async () => {
+  const { w, project } = await populated("gemini");
+  const show = await run(["show", "gemini:latest"], w, { cwd: project });
+  assert.match(show.out, /^Add a health endpoint\n\s+from\s+Gemini CLI, id gem-1111/);
+  assert.match(show.out, /model\s+gemini-2\.5-pro/);
+  const imp = await run(["import", "gemini:latest", "--tools", "full"], w, { cwd: project });
+  assert.match(imp.out, /^Imported Add a health endpoint from Gemini CLI into Claude Code: 4 messages/);
+  const id = /claude --resume ([0-9a-f-]{36})/.exec(imp.out)[1];
+  const conv = readSession(sessionFiles({ env: w.env, project }).find((s) => s.id === id).file);
+  assert.match(conv.turns[1].text, /\(Used run_command: ls src\)\n```\napp\.js\nroutes\.js\n```/);
 });
 
 test("a session's own title and project survive a round trip through every format", async () => {

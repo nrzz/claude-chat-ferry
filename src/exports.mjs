@@ -23,7 +23,8 @@ export function detectJson(data) {
   if (Array.isArray(first.chat_messages)) return "claude-ai";
   if (first.mapping && typeof first.mapping === "object") return "chatgpt";
   if (Array.isArray(data) && typeof first.role === "string" && "content" in first) return "messages";
-  if (Array.isArray(first.messages) && first.messages.length && typeof first.messages[0]?.role === "string") return "messages";
+  if (first.sessionId && Array.isArray(first.messages)) return "messages";
+  if (Array.isArray(first.messages) && first.messages.length && (typeof first.messages[0]?.role === "string" || first.messages[0]?.type === "user" || first.messages[0]?.type === "gemini")) return "messages";
   return "";
 }
 
@@ -31,11 +32,13 @@ export function detectJson(data) {
 
 function messagesConversation(data, file) {
   const list = Array.isArray(data) ? data : data.messages;
-  const conv = conversation({ tool: "json", id: String((!Array.isArray(data) && (data.id || data.conversation_id)) || ""), title: String((!Array.isArray(data) && (data.title || data.name)) || ""), source: file, model: !Array.isArray(data) && typeof data.model === "string" ? data.model : "" });
+  const tool = (!Array.isArray(data) && (data.tool || (data.generator === "gemini-cli" ? "gemini" : ""))) || "json";
+  const conv = conversation({ tool, id: String((!Array.isArray(data) && (data.sessionId || data.id || data.conversation_id)) || ""), title: String((!Array.isArray(data) && (data.title || data.name)) || ""), source: file, model: !Array.isArray(data) && typeof data.model === "string" ? data.model : "" });
   const pending = new Map();
   for (const m of list) {
     if (!m || typeof m !== "object") continue;
-    const role = m.role === "user" || m.role === "human" ? "user" : m.role === "assistant" || m.role === "model" || m.role === "ai" ? "assistant" : m.role === "tool" ? "tool" : "";
+    const r = m.role || m.type;
+    const role = r === "user" || r === "human" ? "user" : r === "assistant" || r === "gemini" || r === "model" || r === "ai" ? "assistant" : r === "tool" ? "tool" : "";
     const blocks = Array.isArray(m.content) ? m.content : typeof m.content === "string" ? [{ type: "text", text: m.content }] : Array.isArray(m.parts) ? m.parts.map((p) => (typeof p === "string" ? { type: "text", text: p } : p)) : [];
     const at = isoOf(m.created_at || m.timestamp || m.ts || m.time);
     if (role === "tool") {
@@ -53,7 +56,21 @@ function messagesConversation(data, file) {
       else if (b.type === "tool_result") { const tool = pending.get(b.tool_use_id); if (tool) { tool.output = typeof b.content === "string" ? b.content : Array.isArray(b.content) ? b.content.map((x) => x?.text || "").join("\n") : ""; pending.delete(b.tool_use_id); } }
       else if (b.type === "image" || b.type === "image_url") appendText(t, "[image]");
     }
+    if (m.thoughts) {
+      const thoughtStr = typeof m.thoughts === "string" ? m.thoughts : Array.isArray(m.thoughts) ? m.thoughts.map((x) => (typeof x === "string" ? x : x?.text || "")).filter(Boolean).join("\n\n") : "";
+      if (thoughtStr) t.thinking = t.thinking ? `${t.thinking}\n\n${thoughtStr}` : thoughtStr;
+    }
     if (Array.isArray(m.tool_calls)) for (const c of m.tool_calls) t.tools.push({ name: String(c?.function?.name || c?.name || "tool"), input: tryParse(c?.function?.arguments) ?? c?.function?.arguments ?? c?.args ?? {}, output: "" });
+    if (Array.isArray(m.toolCalls)) {
+      for (const c of m.toolCalls) {
+        t.tools.push({
+          name: String(c?.name || c?.function?.name || c?.type || "tool"),
+          input: tryParse(c?.args) ?? c?.args ?? tryParse(c?.arguments) ?? c?.arguments ?? c?.input ?? {},
+          output: typeof c?.output === "string" ? c.output : typeof c?.result === "string" ? c.result : "",
+        });
+      }
+    }
+    if (!conv.model && typeof m.model === "string") conv.model = m.model;
     conv.turns.push(t);
   }
   return finish(conv);
