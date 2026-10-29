@@ -30,6 +30,7 @@ test("Claude Code resumes an imported session and sends its turns to the model",
   const seen = [];
   const server = http.createServer((req, res) => {
     let body = "";
+    req.setEncoding("utf8"); // so a character split across two chunks still decodes
     req.on("data", (c) => (body += c));
     req.on("end", () => { seen.push({ url: req.url, body }); res.writeHead(400, { "content-type": "application/json" }); res.end(JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "fake api: stop here" } })); });
   });
