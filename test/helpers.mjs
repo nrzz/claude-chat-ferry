@@ -3,7 +3,7 @@
 //
 // SAFETY: nothing here reads or writes a real folder of Claude Code, Cursor, Antigravity or
 // Codex. Importing this file points HOME, USERPROFILE, CLAUDE_CONFIG_DIR, CURSOR_USER_DIR,
-// ANTIGRAVITY_DIR and CODEX_HOME of the test process at empty temporary folders, so even a test
+// ANTIGRAVITY_DIR, CODEX_HOME and GEMINI_CLI_HOME of the test process at empty temporary folders, so even a test
 // that forgets to pass its own environment cannot reach them. Every child process gets a world's
 // environment, and runCli refuses to run with a config folder outside the OS temp folder.
 import fs from "node:fs";
@@ -32,6 +32,7 @@ process.env.CLAUDE_CONFIG_DIR = path.join(guard, ".claude");
 process.env.CURSOR_USER_DIR = path.join(guard, "cursor");
 process.env.ANTIGRAVITY_DIR = path.join(guard, "antigravity");
 process.env.CODEX_HOME = path.join(guard, "codex");
+process.env.GEMINI_CLI_HOME = path.join(guard, "gemini");
 delete process.env.CLAUDE_CODE_SESSION_ID;
 delete process.env.CLAUDE_CODE_PROJECT_DIR_NAME;
 
@@ -39,7 +40,7 @@ const underTmp = (p) => path.resolve(p).toLowerCase().startsWith(fs.realpathSync
 const configDirOf = (e) => e.CLAUDE_CONFIG_DIR || path.join((process.platform === "win32" ? e.USERPROFILE || e.HOME : e.HOME) || "", ".claude");
 
 // A throwaway world: base/home is the home folder, base/home/.claude the Claude config folder,
-// base/cursor a Cursor user folder, base/antigravity an Antigravity folder, base/codex a Codex home,
+// base/cursor a Cursor user folder, base/antigravity an Antigravity folder, base/codex a Codex home, base/gemini a Gemini CLI home (GEMINI_CLI_HOME: it makes .gemini inside),
 // base/work/<name> project folders.
 export function world(name = "w") {
   const base = tmpDir(`ferry-${name}-`);
@@ -48,11 +49,12 @@ export function world(name = "w") {
   const cursor = path.join(base, "cursor");
   const antigravity = path.join(base, "antigravity");
   const codex = path.join(base, "codex");
-  for (const d of [claude, cursor, antigravity, codex]) fs.mkdirSync(d, { recursive: true });
-  const env = { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: claude, CURSOR_USER_DIR: cursor, ANTIGRAVITY_DIR: antigravity, CODEX_HOME: codex, NO_COLOR: "1" };
+  const gemini = path.join(base, "gemini");
+  for (const d of [claude, cursor, antigravity, codex, gemini]) fs.mkdirSync(d, { recursive: true });
+  const env = { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: claude, CURSOR_USER_DIR: cursor, ANTIGRAVITY_DIR: antigravity, CODEX_HOME: codex, GEMINI_CLI_HOME: gemini, NO_COLOR: "1" };
   delete env.FORCE_COLOR;
   return {
-    base, home, claude, cursor, antigravity, codex, env,
+    base, home, claude, cursor, antigravity, codex, gemini, env,
     project(n) { const d = path.join(base, "work", n); fs.mkdirSync(d, { recursive: true }); return d; },
   };
 }

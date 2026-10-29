@@ -13,7 +13,7 @@
 //              input is an object (or a string when the tool stored one), output a string or ""
 import { estimateTokens, firstLine, oneLine } from "./util.mjs";
 
-export const TOOL_NAMES = { "claude-code": "Claude Code", cursor: "Cursor", antigravity: "Antigravity", codex: "Codex CLI", "claude-ai": "claude.ai", chatgpt: "ChatGPT", markdown: "Markdown", json: "JSON" };
+export const TOOL_NAMES = { "claude-code": "Claude Code", cursor: "Cursor", antigravity: "Antigravity", codex: "Codex CLI", gemini: "Gemini CLI", "claude-ai": "claude.ai", chatgpt: "ChatGPT", markdown: "Markdown", json: "JSON" };
 export const toolName = (tool) => TOOL_NAMES[tool] || tool || "unknown";
 
 export function conversation(fields = {}) {

@@ -2,6 +2,7 @@
 // this tool's own JSON. One file can hold many conversations; `pick` chooses one.
 import fs from "node:fs";
 import path from "node:path";
+import { isShare, readShare } from "./gemini.mjs";
 import { appendText, conversation, finish, turn } from "./model.mjs";
 import { cmp, firstLine, isoOf, oneLine, tryParse } from "./util.mjs";
 
@@ -13,7 +14,8 @@ export function loadJsonFile(file) {
   try { return JSON.parse(text.replace(/^﻿/, "")); } catch { throw new Error(`${path.basename(file)} is not JSON`); }
 }
 
-// What a JSON file is: "claude-ai", "chatgpt", "ferry" (this tool's JSON), "messages" (a plain
+// What a JSON file is: "claude-ai", "chatgpt", "ferry" (this tool's JSON), "gemini-share" (what
+// Gemini CLI's `/chat share file.json` writes), "messages" (a plain
 // list of { role, content } messages, as Cline's api_conversation_history.json and many scripts
 // write), or "" when unknown.
 export function detectJson(data) {
@@ -22,6 +24,7 @@ export function detectJson(data) {
   if (first.format === JSON_FORMAT || (Array.isArray(first.turns) && "tool" in first)) return "ferry";
   if (Array.isArray(first.chat_messages)) return "claude-ai";
   if (first.mapping && typeof first.mapping === "object") return "chatgpt";
+  if (isShare(data)) return "gemini-share";
   if (Array.isArray(data) && typeof first.role === "string" && "content" in first) return "messages";
   if (Array.isArray(first.messages) && first.messages.length && typeof first.messages[0]?.role === "string") return "messages";
   return "";
@@ -151,6 +154,10 @@ export function listJsonFile(file) {
   const data = loadJsonFile(file);
   const kind = detectJson(data);
   if (!kind) throw new Error(`${path.basename(file)} is not a claude.ai export, a ChatGPT export, a list of messages or claude-chat-ferry JSON`);
+  if (kind === "gemini-share") {
+    const c = readShare(data, file);
+    return { kind, items: [{ index: 0, tool: "gemini", id: "", title: c.title, startedAt: "", updatedAt: "", messages: data.length }] };
+  }
   if (kind === "messages") {
     const c = messagesConversation(data, file);
     return { kind, items: [{ index: 0, tool: "json", id: c.id, title: c.title, startedAt: c.startedAt, updatedAt: c.endedAt, messages: (Array.isArray(data) ? data : data.messages).length }] };
@@ -170,6 +177,7 @@ export function readJsonFile(file, pick = "") {
   const data = loadJsonFile(file);
   const kind = detectJson(data);
   if (!kind) throw new Error(`${path.basename(file)} is not a claude.ai export, a ChatGPT export, a list of messages or claude-chat-ferry JSON`);
+  if (kind === "gemini-share") return readShare(data, file);
   if (kind === "messages") return messagesConversation(data, file);
   const items = Array.isArray(data) ? data : [data];
   const { items: listed } = listJsonFile(file);

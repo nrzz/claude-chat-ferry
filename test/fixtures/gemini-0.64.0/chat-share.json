@@ -1,0 +1,84 @@
+[
+  {
+    "role": "user",
+    "parts": [
+      {
+        "text": "<session_context>\nThis is the Gemini CLI. We are setting up the context for our chat.\nToday's date is Thursday, 29 October 2026 (formatted according to the user's locale).\nMy operating system is: win32\nThe project's temporary directory is: C:\\Users\\dev\\.gemini\\tmp\\webapp\n- **Workspace Directories:**\n  - C:\\work\\webapp\n- **Directory Structure:**\n\nShowing up to 200 items (files + folders).\n\nC:\\work\\webapp\\\n└───notes.txt\n\n\n</session_context>"
+      },
+      {
+        "text": "Read notes.txt and tell me what it holds"
+      }
+    ]
+  },
+  {
+    "role": "model",
+    "parts": [
+      {
+        "functionCall": {
+          "id": "read_file__read_file_1793253607978_0",
+          "name": "read_file",
+          "args": {
+            "file_path": "C:\\work\\webapp\\notes.txt"
+          }
+        },
+        "thoughtSignature": "skip_thought_signature_validator"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "parts": [
+      {
+        "functionResponse": {
+          "id": "read_file__read_file_1793253607978_0",
+          "name": "read_file",
+          "response": {
+            "output": "alpha\nbeta\n"
+          }
+        }
+      },
+      {
+        "functionResponse": {
+          "id": "read_file__read_file_1793253607978_0",
+          "name": "read_file",
+          "response": {
+            "output": "alpha\nbeta\n"
+          }
+        }
+      },
+      {
+        "functionResponse": {
+          "id": "read_file__read_file_1793253607978_0",
+          "name": "read_file",
+          "response": {
+            "output": "alpha\nbeta\n"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "model",
+    "parts": [
+      {
+        "text": "TOOLDONE: the file has two lines, alpha and beta."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "parts": [
+      {
+        "text": "Now add a line gamma"
+      }
+    ]
+  },
+  {
+    "role": "model",
+    "parts": [
+      {
+        "text": "PROBE-DONE"
+      }
+    ]
+  }
+]

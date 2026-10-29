@@ -240,6 +240,7 @@ test("toolName gives the product's name for a tool id, the id itself when unknow
   assert.equal(toolName("cursor"), "Cursor");
   assert.equal(toolName("antigravity"), "Antigravity");
   assert.equal(toolName("codex"), "Codex CLI");
+  assert.equal(toolName("gemini"), "Gemini CLI");
   assert.equal(toolName("claude-ai"), "claude.ai");
   assert.equal(toolName("chatgpt"), "ChatGPT");
   assert.equal(toolName("markdown"), "Markdown");
@@ -247,5 +248,5 @@ test("toolName gives the product's name for a tool id, the id itself when unknow
   assert.equal(toolName("my-own-tool"), "my-own-tool");
   assert.equal(toolName(""), "unknown");
   assert.equal(toolName(undefined), "unknown");
-  assert.deepEqual(Object.keys(TOOL_NAMES).sort(), ["antigravity", "chatgpt", "claude-ai", "claude-code", "codex", "cursor", "json", "markdown"]);
+  assert.deepEqual(Object.keys(TOOL_NAMES).sort(), ["antigravity", "chatgpt", "claude-ai", "claude-code", "codex", "cursor", "gemini", "json", "markdown"]);
 });
