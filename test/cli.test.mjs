@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { SECRETS, hasSqlite, read, run, runCli, world } from "./helpers.mjs";
 import { Transcript, richSession } from "./synthetic.mjs";
 import { makeCursorStore, sampleChats } from "./fake-cursor.mjs";
@@ -357,13 +358,13 @@ test("the Codex source works end to end: show, import", async () => {
 test("the Gemini source works end to end: show, import", async () => {
   const { w, project } = await populated("gemini");
   const show = await run(["show", "gemini:latest"], w, { cwd: project });
-  assert.match(show.out, /^Add a health endpoint\n\s+from\s+Gemini CLI, id gem-1111/);
-  assert.match(show.out, /model\s+gemini-2\.5-pro/);
+  assert.match(show.out, /^Add a health endpoint\n\s+from\s+Gemini CLI, id 11111111/);
+  assert.match(show.out, /model\s+gemini-3.1-pro-preview/);
   const imp = await run(["import", "gemini:latest", "--tools", "full"], w, { cwd: project });
   assert.match(imp.out, /^Imported Add a health endpoint from Gemini CLI into Claude Code: 4 messages/);
   const id = /claude --resume ([0-9a-f-]{36})/.exec(imp.out)[1];
   const conv = readSession(sessionFiles({ env: w.env, project }).find((s) => s.id === id).file);
-  assert.match(conv.turns[1].text, /\(Used run_command: ls src\)\n```\napp\.js\nroutes\.js\n```/);
+  assert.match(conv.turns[1].text, /\((Used run_shell_command: ls src)\)\n```\napp\.js\nroutes\.js\n```/);
 });
 
 test("a session's own title and project survive a round trip through every format", async () => {
@@ -382,4 +383,15 @@ test("a session's own title and project survive a round trip through every forma
     assert.equal(j.stats.turns, 2, to);
     assert.equal(j.project, project, to);
   }
+});
+
+test("a /chat share export of Gemini CLI is shown and imported from its file", async () => {
+  const w = world("gemini-share");
+  const project = w.project("p");
+  const share = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "gemini-0.64.0", "chat-share.json");
+  const show = await run(["show", share], w, { cwd: project });
+  assert.match(show.out, /^Read notes\.txt and tell me what it holds\n\s+from\s+Gemini CLI/);
+  assert.match(show.out, /size\s+2 exchanges, 4 turns, 1 tool call/);
+  const imp = await run(["import", share, "--tools", "full"], w, { cwd: project });
+  assert.match(imp.out, /^Imported Read notes\.txt and tell me what it holds from Gemini CLI into Claude Code: 4 messages/);
 });
