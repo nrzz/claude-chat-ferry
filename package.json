@@ -1,6 +1,6 @@
 {
   "name": "claude-chat-ferry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Move a chat between Claude Code, Cursor and Antigravity: continue a Cursor or Antigravity chat in Claude Code, hand a Claude Code session to Cursor or Antigravity, or turn any of them (and claude.ai or ChatGPT exports) into Markdown or JSON.",
   "type": "module",
   "bin": {
